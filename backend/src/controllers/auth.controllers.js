@@ -2,6 +2,25 @@ import User from "../model/user.js";
 import jwt from "jsonwebtoken";
 import generateToken from "../utils/gernerateToken.js";
 
+const getProfile = async (req, res) => {
+  try {
+    // req.user is set by protect middleware
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    res.status(200).json({
+      id: req.user._id,
+      username: req.user.username,
+      email: req.user.email,
+      createdAt: req.user.createdAt,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 const register = async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -46,7 +65,14 @@ const login = async (req, res) => {
       sameSite: "strict",
     });
 
-    res.json({ accessToken });
+    res.json({
+      accessToken,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+      },
+    });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
     console.error(err);
@@ -76,35 +102,30 @@ const logout = async (req, res) => {
 };
 
 const refresh = async (req, res) => {
-  try {
+  if (req.cookies?.refreshToken) {
+    // Destructuring refreshToken from cookie
     const refreshToken = req.cookies.refreshToken;
 
-    if (!refreshToken)
-      return res.status(401).json({ message: "No refresh token" });
-
-    const payload = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
-
-    const user = await User.findById(payload.id);
-    if (!user || user.refreshToken !== refreshToken) {
-      return res.status(403).json({ message: "Invalid refresh token" });
-    }
-    // Generate new tokens
-    const { accessToken, refreshToken: newRefreshToken } = generateToken({
-      id: user._id,
+    // Verifying refresh token
+    jwt.verify(refreshToken, process.env.REFRESH_SECRET, (err, decoded) => {
+      if (err) {
+        // Wrong Refesh Token
+        return res.status(406).json({ message: "Unauthorized" });
+      } else {
+        // Correct token we send a new access token
+        const accessToken = jwt.sign(
+          { id: decoded.id },
+          process.env.ACCESS_SECRET,
+          {
+            expiresIn: "10m",
+          }
+        );
+        return res.json({ accessToken });
+      }
     });
-    user.refreshToken = newRefreshToken;
-    await user.save();
-
-    res.cookie("refreshToken", newRefreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "strict",
-    });
-
-    res.json({ accessToken });
-  } catch (err) {
-    res.status(500).json({ message: "Server error" });
+  } else {
+    return res.status(406).json({ message: "Unauthorized" });
   }
 };
 
-export { register, login, logout, refresh };
+export { getProfile, register, login, logout, refresh };
