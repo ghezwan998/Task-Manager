@@ -1,29 +1,34 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTasksStore } from "../../store/taskStore";
 
-const AddTask = ({ show, onClose }) => {
-  const addTask = useTasksStore((s) => s.addTask);
+const EditTask = ({ task, show, onClose }) => {
+  const updateTask = useTasksStore((s) => s.updateTask);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [type, setType] = useState("");
 
+  useEffect(() => {
+    if (task) {
+      setTitle(task.title || "");
+      setDescription(task.description || "");
+      setType(task.type || "");
+    }
+  }, [task]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    await addTask({
+    await updateTask(task._id, {
       title,
       description,
-      type: type || null, 
+      type: type || null,
     });
 
-    setTitle("");
-    setDescription("");
-    setType("");
     onClose();
   };
 
-  if (!show) return null;
+  if (!show || !task) return null;
 
   return (
     <>
@@ -36,7 +41,7 @@ const AddTask = ({ show, onClose }) => {
           <div className="modal-content">
             <form onSubmit={handleSubmit}>
               <div className="modal-header">
-                <h5 className="modal-title">Add New Task</h5>
+                <h5 className="modal-title">Edit Task</h5>
                 <button
                   type="button"
                   className="btn-close"
@@ -73,7 +78,7 @@ const AddTask = ({ show, onClose }) => {
                   <label className="form-label">Type</label>
                   <select
                     className="form-select"
-                    value={type}
+                    value={type || ""}
                     onChange={(e) => setType(e.target.value)}
                   >
                     <option value="">None</option>
@@ -93,7 +98,7 @@ const AddTask = ({ show, onClose }) => {
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  Add Task
+                  Save Changes
                 </button>
               </div>
             </form>
@@ -106,4 +111,4 @@ const AddTask = ({ show, onClose }) => {
   );
 };
 
-export default AddTask;
+export default EditTask;

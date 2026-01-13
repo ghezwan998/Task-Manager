@@ -26,7 +26,6 @@ export const useAuthStore = create((set) => ({
         isAuthReady: true,
       });
     } catch (err) {
-      // ❗ DO NOT logout here unless refresh already failed
       set({ isAuthReady: true });
     }
   },

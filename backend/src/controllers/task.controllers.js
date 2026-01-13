@@ -5,7 +5,6 @@ const getTasks = async (req, res) => {
     const tasks = await Task.find({ user: req.user._id }).sort({
       createdAt: -1,
     });
-
     res.status(200).json(tasks);
   } catch (err) {
     res.status(500).json({ message: "Failed to fetch tasks" });
@@ -20,7 +19,6 @@ const addTask = async (req, res) => {
     });
 
     res.status(201).json({
-      message: "Task added successfully",
       task,
     });
   } catch (err) {
@@ -39,7 +37,7 @@ const updateTask = async (req, res) => {
   });
 
   const task = await Task.findOneAndUpdate(
-    { _id: req.params.id, user: req.user._id },
+    { _id: req.params.taskId, user: req.user._id },
     { $set: updates },
     { new: true, runValidators: true }
   );
@@ -60,7 +58,7 @@ const updateTaskStatus = async (req, res) => {
   }
 
   const task = await Task.findOneAndUpdate(
-    { _id: req.params.id, user: req.user._id },
+    { _id: req.params.taskId, user: req.user._id },
     { $set: { status } },
     { new: true }
   );

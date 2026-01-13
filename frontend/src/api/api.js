@@ -1,13 +1,11 @@
-// src/lib/axios.js
 import axios from "axios";
 import { useAuthStore } from "../store/authStore";
 
 const api = axios.create({
   baseURL: "http://localhost:5000/api",
-  withCredentials: true, // REQUIRED for refresh cookie
+  withCredentials: true, 
 });
 
-// Attach access token
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().accessToken;
   if (token) {
@@ -16,7 +14,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle token refresh
 let isRefreshing = false;
 let failedQueue = [];
 
